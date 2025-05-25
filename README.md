@@ -164,7 +164,7 @@ use Nrauf90\LaravelAcl\Models\Permission;
 
 class Permission extends Model
 {
-    protected $fillable = ['name', 'controller', 'method'];
+    protected $fillable = ['name', 'controller', 'method', 'title', 'description'];
 }
 ```
 
