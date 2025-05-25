@@ -1,98 +1,157 @@
-# Laravel ACL Package
+# Laravel ACL
 
-A custom Laravel ACL (Access Control List) package to auto-scan public controller methods and register them as permissions in the database. Includes middleware for dynamic access control.
-
----
+A custom Laravel ACL (Access Control List) package that automatically scans controller methods and stores permissions in the database. This package provides a simple and efficient way to manage permissions in your Laravel application.
 
 ## Features
 
-- Automatically scans public controller methods.
-- Stores permissions in the `permissions` table.
-- Middleware to check if the authenticated user has access.
-- Ready for role/permission expansion.
+- Automatic permission scanning from controller methods
+- Database-driven permission management
+- Middleware for permission checking
+- Artisan command for syncing permissions
+- Easy to integrate and use
 
----
+## Requirements
+
+- PHP >= 8.0
+- Laravel >= 9.0
 
 ## Installation
 
-### 1. Add the package to your Laravel project
+1. Install the package via Composer:
 
-In your Laravel app's `composer.json`:
+```bash
+composer require nrauf90/laravel-acl
+```
 
-```json
-"repositories": [
-  {
-    "type": "path",
-    "url": "packages/YourName/LaravelAcl"
-  }
-]
+2. Publish the migration:
 
-Then run:
+```bash
+php artisan vendor:publish --tag=larvel-acl
+```
 
-composer require yourname/laravel-acl:@dev
+3. Run the migration:
 
-
----
-
-2. Publish and run the migration
-
-php artisan vendor:publish --tag=migrations
+```bash
 php artisan migrate
+```
 
+## Usage
 
----
+### Syncing Permissions
 
-3. Sync permissions
+To scan your controllers and sync permissions to the database, run:
 
-This command will scan all public methods of your controllers and store them in the permissions table:
-
+```bash
 php artisan acl:sync-permissions
+```
 
+This command will:
+- Scan all controllers in your `app/Http/Controllers` directory
+- Create permissions for each public method in your controllers
+- Store them in the database with the format: `controllerName.methodName`
 
----
+### Using the Middleware
 
-4. Use Middleware
+Add the middleware to your routes or controllers:
 
-Apply check.acl middleware to your routes or controllers:
-
-Route::middleware(['auth', 'check.acl'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+```php
+// In routes/web.php
+Route::middleware(['check.acl'])->group(function () {
+    // Your protected routes here
 });
 
-
----
-
-Extending the Package
-
-Add Permission Checks to User Model
-
-public function hasPermission($controller, $method)
+// Or in your controller
+public function __construct()
 {
-    $name = strtolower($controller . '.' . $method);
-
-    // Example: Implement role->permissions relationship in your app
-    return $this->permissions()->where('name', $name)->exists();
+    $this->middleware('check.acl');
 }
+```
 
+### Checking Permissions
 
----
+The package automatically adds a `hasPermission` method to your User model. You can use it to check permissions:
 
-File Structure
+```php
+if (auth()->user()->hasPermission('UserController', 'index')) {
+    // User has permission
+}
+```
 
-src/
-├── Commands/
-│   └── SyncPermissions.php
-├── Middleware/
-│   └── CheckAclPermission.php
-├── Models/
-│   └── Permission.php
-├── Migrations/
-│   └── create_permissions_table.php.stub
-└── LaravelAclServiceProvider.php
+## Database Structure
 
+The package creates the following database tables:
 
----
+### Permissions Table
+- `id`: Auto-incrementing primary key
+- `name`: Unique permission name (format: controllerName.methodName)
+- `controller`: The controller name
+- `method`: The method name
+- `timestamps`: Created and updated timestamps
 
-License
+### Roles Table
+- `id`: Auto-incrementing primary key
+- `name`: Unique role name (e.g., admin, editor)
+- `timestamps`: Created and updated timestamps
 
-MIT © 2025 MuhammadNomanRauf
+### Role-Permission Pivot Table
+- `role_id`: Foreign key to roles table
+- `permission_id`: Foreign key to permissions table
+- Primary key combination of `role_id` and `permission_id`
+
+### User-Role Pivot Table
+- `user_id`: Foreign key to users table
+- `role_id`: Foreign key to roles table
+- Primary key combination of `user_id` and `role_id`
+
+### User-Permission Pivot Table (Optional)
+- `user_id`: Foreign key to users table
+- `permission_id`: Foreign key to permissions table
+- Primary key combination of `user_id` and `permission_id`
+
+## Models
+
+### Permission Model
+```php
+use Nrauf90\LaravelAcl\Models\Permission;
+
+class Permission extends Model
+{
+    protected $fillable = ['name', 'controller', 'method'];
+}
+```
+
+### Role Model
+```php
+use Nrauf90\LaravelAcl\Models\Role;
+
+class Role extends Model
+{
+    protected $fillable = ['name'];
+}
+```
+
+### User Model Integration
+Add the following traits to your User model:
+
+```php
+use Nrauf90\LaravelAcl\Traits\HasRoles;
+use Nrauf90\LaravelAcl\Traits\HasPermissions;
+
+class User extends Authenticatable
+{
+    use HasRoles, HasPermissions;
+    // ... rest of your User model
+}
+```
+
+## License
+
+This package is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Author
+
+- [nrauf90](https://github.com/nrauf90)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
