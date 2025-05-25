@@ -37,43 +37,91 @@ php artisan migrate
 
 ## Usage
 
-### Syncing Permissions
+### Sync Permissions
 
-To scan your controllers and sync permissions to the database, run:
+To sync permissions from your controllers, run:
 
 ```bash
 php artisan acl:sync-permissions
 ```
 
-This command will:
-- Scan all controllers in your `app/Http/Controllers` directory
-- Create permissions for each public method in your controllers
-- Store them in the database with the format: `controllerName.methodName`
+This will:
+1. Scan all your controllers
+2. Extract permissions from `@acl-title` and `@acl-description` annotations
+3. Store them in the database
 
-### Using the Middleware
+### Adding Permissions to Controllers
 
-Add the middleware to your routes or controllers:
+Add annotations to your controller methods:
 
 ```php
-// In routes/web.php
-Route::middleware(['check.acl'])->group(function () {
-    // Your protected routes here
-});
-
-// Or in your controller
-public function __construct()
+/**
+ * @acl-title View Users
+ * @acl-description Access the users list page
+ */
+public function index()
 {
-    $this->middleware('check.acl');
+    // Your code here
 }
 ```
 
 ### Checking Permissions
 
-The package automatically adds a `hasPermission` method to your User model. You can use it to check permissions:
+#### Using Middleware in Routes
+
+You can use the middleware in two ways:
+
+1. If registered in Kernel.php:
+```php
+Route::middleware('check.acl:view-users')->group(function () {
+    Route::get('/users', [UserController::class, 'index']);
+});
+```
+
+2. Directly using the middleware class (no Kernel registration needed):
+```php
+use Nrauf90\LaravelAcl\Middleware\PermissionMiddleware;
+
+Route::middleware(['web', 'auth', 'check.acl:view-users'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+    });
+
+// Multiple permissions
+Route::middleware(['web', 'auth', 'check.acl:view-users,edit-users'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/users/{user}/edit', [UserController::class, 'edit']);
+    });
+
+// Any permission
+Route::middleware(['web', 'auth', 'check.acl:view-users|edit-users'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/users/{user}', [UserController::class, 'show']);
+    });
+```
+
+#### Checking in Code
 
 ```php
-if (auth()->user()->hasPermission('UserController', 'index')) {
+// Check single permission
+if (auth()->user()->hasPermission('view-users')) {
     // User has permission
+}
+
+// Check multiple permissions (user must have all permissions)
+if (auth()->user()->hasAllPermissions(['view-users', 'edit-users'])) {
+    // User has all permissions
+}
+
+// Check any permission (user must have at least one permission)
+if (auth()->user()->hasAnyPermission(['view-users', 'edit-users'])) {
+    // User has at least one permission
 }
 ```
 

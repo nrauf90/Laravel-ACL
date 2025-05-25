@@ -14,6 +14,8 @@ return new class extends Migration {
         Schema::create('permissions', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // e.g. user.index
+            $table->string('title')->nullable(); // e.g. Create User
+            $table->text('description')->nullable(); // e.g. Create a new user in the system
             $table->string('controller');
             $table->string('method');
             $table->timestamps();
@@ -31,6 +33,7 @@ return new class extends Migration {
             $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
             $table->foreignId('permission_id')->constrained('permissions')->onDelete('cascade');
             $table->primary(['role_id', 'permission_id']);
+            $table->timestamps();
         });
 
         // User-Role pivot table
@@ -38,6 +41,7 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
             $table->primary(['user_id', 'role_id']);
+            $table->timestamps();
         });
 
         // Optional: User-Permission pivot table (if needed)
@@ -45,6 +49,7 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('permission_id')->constrained('permissions')->onDelete('cascade');
             $table->primary(['user_id', 'permission_id']);
+            $table->timestamps();
         });
     }
 

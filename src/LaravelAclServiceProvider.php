@@ -14,7 +14,7 @@ class LaravelAclServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Migrations/create_acl_tables.php' =>
                 database_path('migrations/' . date('Y_m_d_His') . '_create_acl_tables.php'),
-        ], 'larvel-acl');
+        ], 'laravel-acl');
 
         // Publish views
         $this->loadViewsFrom(__DIR__ . '/resources/views', 'laravel-acl');

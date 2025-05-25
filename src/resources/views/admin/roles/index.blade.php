@@ -1,4 +1,4 @@
-@extends('laravel-acl::admin.layouts.app')
+@extends('layouts.app')
 
 @section('content')
     <div class="card">
@@ -12,6 +12,7 @@
                 <tr>
                     <th>Name</th>
                     <th>Permissions</th>
+                    <th>Users</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -22,16 +23,17 @@
                         <td>
                             @foreach($role->permissions as $permission)
                                 <span style="display: inline-block; background: #e2e8f0; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin: 0.25rem;">
-                                    {{ $permission->name }}
+                                    {{ $permission->title ?: $permission->name }}
                                 </span>
                             @endforeach
                         </td>
+                        <td>{{ $role->users->count() }}</td>
                         <td>
-                            <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-primary">Edit</a>
+                            <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-sm btn-primary">Edit</a>
                             <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" style="display: inline;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                             </form>
                         </td>
                     </tr>
